@@ -4,7 +4,8 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
-from scipy.stats import spearmanr, pearsonr
+from scipy.stats import pearsonr
+import seaborn as sns
 
 # define the function to read the snapshot h5 files and return the data
 def read_snapshots(file_name):    
@@ -154,52 +155,75 @@ def manage_files():
             except Exception as e:
                 print(f"Error occurred while moving file {file}: {str(e)}")
             
-# Function to calculate Pearson and Spearman correlations of all the arrays in array_list
-def calculate_correlations(array_list):
+# Function to calculate Pearson correlations of all the arrays in array_list
+def get_pearson_corr(array_list, field_names):
     n = len(array_list)
     p_corr_matrix = np.zeros((n, n))
-    s_corr_matrix = np.zeros((n, n))
 
     for i in range(n):
         for j in range(i, n):
             array1, array2 = array_list[i].flatten(), array_list[j].flatten()
+            print(field_names[i], field_names[j])
+
             pearson_corr, _ = pearsonr(array1, array2)
-            spearman_corr, _ = spearmanr(array1, array2)
+            print(pearson_corr)
             
             p_corr_matrix[i, j] = pearson_corr
-            s_corr_matrix[i, j] = spearman_corr
             
             if i != j:
                 p_corr_matrix[j, i] = pearson_corr
-                s_corr_matrix[j, i] = spearman_corr
+        
+        print('done for ', field_names[i])
+    
+    return p_corr_matrix
 
-    return p_corr_matrix, s_corr_matrix
-
-def top_k_corrs(pcm, scm, k=10):
+def top_k_corrs(pcm, k=10):
     '''
     Return the top k most correlated pairs (either positive or negative)
-    from the Pearson and Spearman correlation matrices pcm and scm.
+    from the Pearson correlation matrices pcm and scm.
     We exclude self-correlations and duplicate pairs. The indices of the
     top k most correlated pairs are returned in ascending order.
     '''
     abs_pcm = np.abs(pcm)
-    abs_scm = np.abs(scm)
 
     # set the diagonal and lower triangle to zero
     # to exclude self-correlations and duplicate pairs
     np.fill_diagonal(abs_pcm, 0)
-    np.fill_diagonal(abs_scm, 0)
 
     triu_indices = np.triu_indices(abs_pcm.shape[0], 1)
     abs_pcm[triu_indices] = 0
-    abs_scm[triu_indices] = 0
 
-    # find the top 10 most correlated pairs
+    # find the top k most correlated pairs
     top_k_p = np.argpartition(abs_pcm, -k, axis=None)[-k:]
-    top_k_s = np.argpartition(abs_scm, -k, axis=None)[-k:]
 
     # convert the indices to 2D
     top_k_p = np.unravel_index(top_k_p, abs_pcm.shape)
-    top_k_s = np.unravel_index(top_k_s, abs_scm.shape)
 
-    return top_k_p, top_k_s
+    # sort the indices by correlation value in ascending order
+    sorted_indices = np.argsort(abs_pcm[top_k_p])[::-1]
+
+    return pcm[top_k_p][sorted_indices], np.array(top_k_p)[:, sorted_indices]
+
+def plot_corr_matrix(corr_matrix, title, field_names, to_mark=True,
+                     top_k_correlations=None, top_k_indices=None, top_k=5,
+                     annot_all=False, annot_top_k=True):
+    # create a mask for the upper triangle
+    mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
+
+    ax = sns.heatmap(corr_matrix, cmap='coolwarm', annot=annot_all, mask=mask)
+    plt.title(title)
+    plt.xticks(ticks=np.arange(0.5, len(field_names) + 0.5, 1),
+               labels=field_names, rotation=90)
+    plt.yticks(ticks=np.arange(0.5, len(field_names) + 0.5, 1),
+               labels=field_names, rotation=0)
+    
+    if to_mark:
+        for i in range(top_k):
+            plt.text(top_k_indices[1][i]+0.5, top_k_indices[0][i]+0.6, '*',
+                     fontsize=12, color='black', ha='center', va='center')
+            
+    if annot_top_k:
+        for corr, (i, j) in zip(top_k_correlations, zip(*top_k_indices)):
+            ax.text(j+0.5, i+0.5, f'{corr:.2f}', 
+                ha='center', va='center', color='black')
+    plt.show()
