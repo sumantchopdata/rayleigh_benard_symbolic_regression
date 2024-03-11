@@ -34,15 +34,15 @@ grad_p_z = grad_p[:, 1, :, :]
 grad_p_x = grad_p_x.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
 grad_p_z = grad_p_z.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
 
-grad_ux_x = grad_u[:, 0, 0, :, :]
-grad_ux_z = grad_u[:, 0, 1, :, :]
-grad_uz_x = grad_u[:, 1, 0, :, :]
-grad_uz_z = grad_u[:, 1, 1, :, :]
+grad_x_ux = grad_u[:, 0, 0, :, :]
+grad_z_ux = grad_u[:, 0, 1, :, :]
+grad_x_uz = grad_u[:, 1, 0, :, :]
+grad_z_uz = grad_u[:, 1, 1, :, :]
 
-grad_ux_x = grad_ux_x.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
-grad_ux_z = grad_ux_z.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
-grad_uz_x = grad_uz_x.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
-grad_uz_z = grad_uz_z.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
+grad_x_ux = grad_x_ux.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
+grad_z_ux = grad_z_ux.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
+grad_x_uz = grad_x_uz.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
+grad_z_uz = grad_z_uz.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
 
 dux_dt = du_dt[:, 0, :, :]
 duz_dt = du_dt[:, 1, :, :]
@@ -56,7 +56,7 @@ duz_dt = duz_dt.reshape(25, 8, 64, 4, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
 # and everything else as the X array.
 
 X = np.concatenate([grad_p_x, grad_p_z, dux_dt, duz_dt, buoyancy,
-                    grad_ux_x, grad_ux_z, grad_uz_x, grad_uz_z], axis=1)
+                    grad_x_ux, grad_z_ux, grad_x_uz, grad_z_uz], axis=1)
 y = np.concatenate([div_grad_u_x, div_grad_u_z], axis=1)
 print(X.shape, y.shape)
 #%%

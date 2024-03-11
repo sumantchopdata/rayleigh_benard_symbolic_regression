@@ -4,6 +4,7 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
+from scipy.stats import spearmanr, pearsonr
 
 # define the function to read the snapshot h5 files and return the data
 def read_snapshots(file_name):    
@@ -73,7 +74,7 @@ def plot_comparative_time_heatmaps(X, y, coordinate, model, is_x = True, is_pool
     plt.savefig(f'{heatmap}_{coordinate}_{is_row}', dpi=300)
     plt.show()
 
-def plot_comparative_space_heatmaps(X, y, timestep, model, is_pooled=False):
+def plot_comparative_space_heatmaps(X, y, timestep, is_pooled=False):
     '''
     make the side by side heatmaps of both the actual and the predicted arrays
     at a particular timestep against the spatial coordinates
@@ -152,3 +153,53 @@ def manage_files():
                 shutil.move(file, 'pickled_files')
             except Exception as e:
                 print(f"Error occurred while moving file {file}: {str(e)}")
+            
+# Function to calculate Pearson and Spearman correlations of all the arrays in array_list
+def calculate_correlations(array_list):
+    n = len(array_list)
+    p_corr_matrix = np.zeros((n, n))
+    s_corr_matrix = np.zeros((n, n))
+
+    for i in range(n):
+        for j in range(i, n):
+            array1, array2 = array_list[i].flatten(), array_list[j].flatten()
+            pearson_corr, _ = pearsonr(array1, array2)
+            spearman_corr, _ = spearmanr(array1, array2)
+            
+            p_corr_matrix[i, j] = pearson_corr
+            s_corr_matrix[i, j] = spearman_corr
+            
+            if i != j:
+                p_corr_matrix[j, i] = pearson_corr
+                s_corr_matrix[j, i] = spearman_corr
+
+    return p_corr_matrix, s_corr_matrix
+
+def top_k_corrs(pcm, scm, k=10):
+    '''
+    Return the top k most correlated pairs (either positive or negative)
+    from the Pearson and Spearman correlation matrices pcm and scm.
+    We exclude self-correlations and duplicate pairs. The indices of the
+    top k most correlated pairs are returned in ascending order.
+    '''
+    abs_pcm = np.abs(pcm)
+    abs_scm = np.abs(scm)
+
+    # set the diagonal and lower triangle to zero
+    # to exclude self-correlations and duplicate pairs
+    np.fill_diagonal(abs_pcm, 0)
+    np.fill_diagonal(abs_scm, 0)
+
+    triu_indices = np.triu_indices(abs_pcm.shape[0], 1)
+    abs_pcm[triu_indices] = 0
+    abs_scm[triu_indices] = 0
+
+    # find the top 10 most correlated pairs
+    top_k_p = np.argpartition(abs_pcm, -k, axis=None)[-k:]
+    top_k_s = np.argpartition(abs_scm, -k, axis=None)[-k:]
+
+    # convert the indices to 2D
+    top_k_p = np.unravel_index(top_k_p, abs_pcm.shape)
+    top_k_s = np.unravel_index(top_k_s, abs_scm.shape)
+
+    return top_k_p, top_k_s

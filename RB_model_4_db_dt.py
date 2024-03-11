@@ -20,10 +20,10 @@ def create_array(x, index, datatype=np.float32):
                                                         axis=0).astype(datatype)
 buoyancy = create_array('buoyancy', 0)
 div_grad_b = create_array('div_grad_b', 1)
-lift_tau_b2 = create_array('lift_tau_b2', 6)
+lift_tau_b2 = create_array('lift_tau_b2', 7)
 
-grad_b = create_array('grad_b', 3)
-velocity = create_array('velocity', 9)
+grad_b = create_array('grad_b', 4)
+velocity = create_array('velocity', 10)
 
 db_dt = derivative_wrt_time(buoyancy, 0.25)
 db_dt = db_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1, 3, 5)).reshape(-1, 1)
@@ -57,11 +57,12 @@ print(X.shape, y.shape)
 del buoyancy, div_grad_b, lift_tau_b2, grad_b, velocity, db_dt, grad_b_x, grad_b_z,
 del u_grad_b, ux, uz, my_fields
 #%%
-model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
-                           use_frequency=False,
-                           use_frequency_in_tournament=False,
-                           adaptive_parsimony_scaling=5,
-                           verbosity=0)
+# model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
+#                            use_frequency=False,
+#                            use_frequency_in_tournament=False,
+#                            adaptive_parsimony_scaling=5,
+#                            verbosity=0)
+model = pysr.PySRRegressor.from_file('pickled_files/RB_db_dt_without_aps.pkl')
 model.fit(X, y)
 print("R^2:", model.score(X, y))
 print(model.sympy())

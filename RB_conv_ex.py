@@ -6,7 +6,6 @@ import numpy as np
 import dedalus.public as d3
 import logging
 from utils import *
-from datetime import date
 logger = logging.getLogger(__name__)
 
 # Parameters
@@ -81,6 +80,7 @@ snapshots.add_task(d3.div(grad_u), name='div_grad_u')
 snapshots.add_task(d3.div(grad_b), name='div_grad_b')
 snapshots.add_task(lift(tau_b2), name='lift_tau_b2')
 snapshots.add_task(lift(tau_u2), name='lift_tau_u2')
+snapshots.add_task(ez, name='ez')
 
 # CFL
 CFL = d3.CFL(solver, initial_dt=max_timestep, cadence=10, safety=0.5, threshold=0.05,
