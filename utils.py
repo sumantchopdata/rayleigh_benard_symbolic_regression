@@ -165,13 +165,13 @@ def get_pearson_corr(array_list, field_names):
             array1, array2 = array_list[i].flatten(), array_list[j].flatten()
             print(field_names[i], field_names[j])
 
-            pearson_corr, _ = pearsonr(array1, array2)
+            pearson_corr = np.corrcoef(array1, array2)
             print(pearson_corr)
             
-            p_corr_matrix[i, j] = pearson_corr
+            p_corr_matrix[i, j] = pearson_corr[0,1]
             
             if i != j:
-                p_corr_matrix[j, i] = pearson_corr
+                p_corr_matrix[j, i] = pearson_corr[0,1]
         
         print('done for ', field_names[i])
     
@@ -210,7 +210,8 @@ def plot_corr_matrix(corr_matrix, title, field_names, to_mark=True,
     # create a mask for the upper triangle
     mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
 
-    ax = sns.heatmap(corr_matrix, cmap='coolwarm', annot=annot_all, mask=mask)
+    ax = sns.heatmap(corr_matrix, cmap='coolwarm', annot=annot_all, mask=mask,
+                     center=0)
     plt.title(title)
     plt.xticks(ticks=np.arange(0.5, len(field_names) + 0.5, 1),
                labels=field_names, rotation=90)
@@ -225,5 +226,7 @@ def plot_corr_matrix(corr_matrix, title, field_names, to_mark=True,
     if annot_top_k:
         for corr, (i, j) in zip(top_k_correlations, zip(*top_k_indices)):
             ax.text(j+0.5, i+0.5, f'{corr:.2f}', 
-                ha='center', va='center', color='black')
+                ha='center', va='center', color='black', fontsize=9)
+    plt.tight_layout()
+    plt.savefig(title+'.png', dpi=300)
     plt.show()

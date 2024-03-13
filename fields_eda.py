@@ -1,6 +1,8 @@
 #%%
 # perform eda on the arrays created by Dedalus
 import numpy as np
+import scipy.stats as stats
+import matplotlib.pyplot as plt
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -65,30 +67,29 @@ del div_grad_u, grad_b, grad_p, grad_u, velocity, du_dt
 
 # print(mean_and_sd)
 
-fields = [field.reshape(50,4,256,64).mean(axis=(1)).reshape(50,-1).astype(np.float32)
+fields = [field.reshape(50,4,256,64).mean(axis=(1)).astype(np.float32)
           for field in fields]
 
 # Calculate correlations
-p_corr_matrix = get_pearson_corr(fields)
-
-# Plot the correlation matrices separately
 field_names = ['buoyancy', 'pressure', 'velocity_x', 'velocity_z', 'vorticity',
             'div_grad_b', 'div_grad_u_x', 'div_grad_u_z', 'grad_b_x', 'grad_b_z',
             'grad_p_x', 'grad_p_z', 'grad_x_ux', 'grad_x_uz', 'grad_z_ux',
             'grad_z_uz', 'db_dt', 'dp_dt', 'dux_dt', 'duz_dt', 'dvort_dt']
 #%%
-top_5_p, top_5_indices = top_k_corrs(p_corr_matrix, k=5)
-#%%
-# print the top 5 most correlated pairs with their correlation values in descending order
-for i in range(4, -1, -1):
+p_corr_matrix = get_pearson_corr(fields, field_names=field_names)
+
+top_5_p, top_5_indices = top_k_corrs(p_corr_matrix, k=10)
+
+# print the top 10 most correlated pairs with their correlation values in descending order
+for i in range(0,10,1):
     print('Top', i+1, 'Pearson correlation:', field_names[top_5_indices[0][i]],
           'and', field_names[top_5_indices[1][i]], 'with a correlation of', 
-            p_corr_matrix[top_5_indices[0][i], top_5_indices[1][i]])
-#%%
-# mark on the correlations heatmap the top 5 most p-correlated pairs
+            round(p_corr_matrix[top_5_indices[0][i], top_5_indices[1][i]],2))
+
+# mark on the correlations heatmap the top 10 most p-correlated pairs
 plot_corr_matrix(p_corr_matrix,
-                 'Pearson Correlation Matrix - Top 5 Most Correlated Pairs',
-                 field_names, to_mark=False, top_k_correlations=top_5_p,
+                 'Pearson Correlation Matrix - Top 10 Most Correlated Pairs',
+                 field_names, to_mark=False, top_k_correlations=top_5_p, top_k=10,
                  top_k_indices=top_5_indices, annot_all=False, annot_top_k=True)
 #%%
 # mention the quantities in the first and the second PDEs
@@ -106,37 +107,37 @@ pde_2_indices = np.array([field_names.index(field) for field in field_names
                                                 if field in pde_2_q])
 pde_2_q_names = [field_names[i] for i in pde_2_indices]
 
-pde_1_corr = get_pearson_corr([fields[i] for i in pde_1_indices])
-pde_2_corr = get_pearson_corr([fields[i] for i in pde_2_indices])
-#%%
+pde_1_corr = get_pearson_corr([fields[i] for i in pde_1_indices], pde_1_q_names)
+pde_2_corr = get_pearson_corr([fields[i] for i in pde_2_indices], pde_2_q_names)
+
 top_5_pde_1_p, top_5_pde_1_indices = top_k_corrs(pde_1_corr, k=5)
 top_5_pde_2_p, top_5_pde_2_indices = top_k_corrs(pde_2_corr, k=5)
-#%%
+
 # mark on the correlations heatmap the top 5 most p-correlated pairs in the first PDE
 plot_corr_matrix(pde_1_corr,
                  'Pearson Correlation Matrix - Top 5 Most Correlated Pairs in PDE 1',
                  pde_1_q_names, to_mark=False, top_k_correlations=top_5_pde_1_p,
                  top_k_indices=top_5_pde_1_indices,
                  annot_all=False, annot_top_k=True)
-#%%
+
 # mark on the correlations heatmap the top 5 most p-correlated pairs in the second PDE
 plot_corr_matrix(pde_2_corr,
                     'Pearson Correlation Matrix - Top 5 Most Correlated Pairs in PDE 2',
                     pde_2_q_names, to_mark=False, top_k_correlations=top_5_pde_2_p,
                     top_k_indices=top_5_pde_2_indices,
                     annot_all=False, annot_top_k=True)
-# %%
+#%%
 # print all the pairs with their correlation values in descending order for the first pde
-for i in range(4, -1, -1):
+for i in range(0,5,1):
     print('Top', i+1, 'Pearson correlation:', pde_1_q_names[top_5_pde_1_indices[0][i]],
           'and', pde_1_q_names[top_5_pde_1_indices[1][i]], 'with a correlation of',
-            pde_1_corr[top_5_pde_1_indices[0][i], top_5_pde_1_indices[1][i]])
+            round(pde_1_corr[top_5_pde_1_indices[0][i], top_5_pde_1_indices[1][i]], 2))
 
 # print all the pairs with their correlation values in descending order for the second pde
-for i in range(4, -1, -1):
+for i in range(0,5,1):
     print('Top', i+1, 'Pearson correlation:', pde_2_q_names[top_5_pde_2_indices[0][i]],
           'and', pde_2_q_names[top_5_pde_2_indices[1][i]], 'with a correlation of',
-            pde_2_corr[top_5_pde_2_indices[0][i], top_5_pde_2_indices[1][i]])
+            round(pde_2_corr[top_5_pde_2_indices[0][i], top_5_pde_2_indices[1][i]],2))
 #%%
 # create the matrices of u_grad_u and u_grad_b and now see what happens
 u_grad_u_x = np.multiply(velocity_x, grad_x_ux) + np.multiply(velocity_z, grad_z_ux)
@@ -159,11 +160,69 @@ field_names = ['buoyancy', 'pressure', 'velocity_x', 'velocity_z', 'vorticity',
 p_corr_matrix = get_pearson_corr(fields, field_names) # FIX THIS FUNCTION
 
 # Plot the correlation matrices separately
-top_5_p, top_5_indices = top_k_corrs(p_corr_matrix, k=5)
+top_5_p, top_5_indices = top_k_corrs(p_corr_matrix, k=10)
 
-# mark on the correlations heatmap the top 5 most p-correlated pairs
+# mark on the correlations heatmap the top 10 most p-correlated pairs
 plot_corr_matrix(p_corr_matrix,
-                 'Pearson Correlation Matrix - Top 5 Most Correlated Pairs',
-                 field_names, to_mark=False, top_k_correlations=top_5_p,
+                 'Pearson Correlation Matrix - Top 10 Most Correlated Pairs \n (including u_grad_u and u_grad_b)',
+                 field_names, to_mark=False, top_k_correlations=top_5_p, top_k=10,
                  top_k_indices=top_5_indices, annot_all=False, annot_top_k=True)
 #%%
+# print the top 10 most correlated pairs with their correlation values in descending order
+for i in range(0,10,1):
+    print('Top', i+1, 'Pearson correlation:', field_names[top_5_indices[0][i]],
+          'and', field_names[top_5_indices[1][i]], 'with a correlation of',
+            round(p_corr_matrix[top_5_indices[0][i], top_5_indices[1][i]],2))
+# %%
+# mention the quantities in the first and the second PDEs
+pde_1_q = ['db_dt', 'div_grad_b', 'u_grad_b']
+
+pde_1_indices = np.array([field_names.index(field) for field in field_names
+                          if field in pde_1_q])
+pde_1_q_names = np.array([field_names[i] for i in pde_1_indices])
+
+pde_2_q = ['dux_dt', 'duz_dt', 'div_grad_u_x', 'div_grad_u_z',
+            'grad_p_x', 'grad_p_z', 'buoyancy','u_grad_u_x', 'u_grad_u_z']
+
+pde_2_indices = np.array([field_names.index(field) for field in field_names
+                                                if field in pde_2_q])
+
+pde_2_q_names = [field_names[i] for i in pde_2_indices]
+
+pde_1_corr = get_pearson_corr([fields[i] for i in pde_1_indices], pde_1_q_names)
+pde_2_corr = get_pearson_corr([fields[i] for i in pde_2_indices], pde_2_q_names)
+
+top_5_pde_1_p, top_5_pde_1_indices = top_k_corrs(pde_1_corr, k=3)
+top_5_pde_2_p, top_5_pde_2_indices = top_k_corrs(pde_2_corr, k=5)
+
+# mark on the correlations heatmap the top 5 most p-correlated pairs in the first PDE
+plot_corr_matrix(pde_1_corr,
+                 'Pearson Correlation Matrix - Top 3 Most Correlated Pairs in PDE 1 \n (including u_grad_b)',
+                 pde_1_q_names, to_mark=False, top_k_correlations=top_5_pde_1_p,
+                 top_k_indices=top_5_pde_1_indices, top_k=3,
+                 annot_all=False, annot_top_k=True)
+
+# mark on the correlations heatmap the top 5 most p-correlated pairs in the second PDE
+plot_corr_matrix(pde_2_corr,
+                    'Pearson Correlation Matrix - Top 5 Most Correlated Pairs in PDE 2 \n (including u_grad_u)',
+                    pde_2_q_names, to_mark=False, top_k_correlations=top_5_pde_2_p,
+                    top_k_indices=top_5_pde_2_indices, top_k=5,
+                    annot_all=False, annot_top_k=True)
+
+# %%
+# create qq plots for the fields, all on the same subplots of a single plot
+fig, axes = plt.subplots(4, 6, figsize=(20, 15))
+axes = axes.flatten()
+for i, field in enumerate(fields):
+    stats.probplot(field.flatten(), dist="norm", plot=axes[i])
+    axes[i].set_title(field_names[i])
+    axes[i].get_lines()[1].set_color('orange')
+    axes[i].get_lines()[1].set_linestyle((0, (5, 10)))
+    axes[i].get_lines()[1].set_linewidth(2)
+    axes[i].get_lines()[0].set_linestyle((0, (5, 10)))
+    axes[i].get_lines()[0].set_color('black')
+    axes[i].get_lines()[0].set_linewidth(2)
+plt.tight_layout()
+plt.savefig('qq_plots.png')
+plt.show()
+# %%
