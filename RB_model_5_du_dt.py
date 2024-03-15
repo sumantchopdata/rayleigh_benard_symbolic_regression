@@ -35,7 +35,7 @@ vorticity = create_array('vorticity', 11)
 du_dt = derivative_wrt_time(velocity, 0.25)
 dvort_dt = derivative_wrt_time(vorticity, 0.25)
 dp_dt = derivative_wrt_time(pressure, 0.25)
-#%%
+
 # perform mean-pooling so that arrays become (50, 128, 32) instead of (200, 256, 64)
 buoyancy = buoyancy.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
 
@@ -80,21 +80,22 @@ duz_dt = duz_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float
 
 u_grad_u_x = np.multiply(velocity_x, grad_x_ux) + np.multiply(velocity_z, grad_z_ux)
 u_grad_u_z = np.multiply(velocity_x, grad_x_uz) + np.multiply(velocity_z, grad_z_uz)
-#%%
+
 dp_dt = dp_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
 dvort_dt = dvort_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
 
 vorticity = vorticity.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
-# %%
+
 X = np.concatenate(
     [arr[4:, ...].reshape(-1,1) for arr in 
-     [grad_p_x, grad_p_z, div_grad_u_x, div_grad_u_z, dp_dt, dvort_dt,
-      lift_tau_u2_x, lift_tau_u2_z, buoyancy, velocity_x, velocity_z, 
-      u_grad_u_x, u_grad_u_z, vorticity]],
+        [dux_dt, duz_dt, div_grad_u_x, div_grad_u_z, dvort_dt, vorticity, 
+        buoyancy, u_grad_u_x, u_grad_u_z]],
      axis=1
      ).astype(np.float32)
 
-y = np.concatenate([arr[4:, :, :].reshape(-1,1) for arr in [dux_dt, duz_dt]], axis=1).astype(np.float32)
+y = np.concatenate([arr[4:, :, :].reshape(-1,1) for arr in
+                        [grad_p_x, grad_p_z]],
+                    axis=1).astype(np.float32)
 print(X.shape, y.shape)
 # %%
 # delete unnecessary variables to free up memory
@@ -103,9 +104,12 @@ del velocity_x, velocity_z, div_grad_u_x, div_grad_u_z, lift_tau_u2_x, lift_tau_
 del grad_p_x, grad_p_z, grad_x_ux, grad_z_ux, grad_x_uz, grad_z_uz, dux_dt, duz_dt
 del u_grad_u_x, u_grad_u_z, vorticity, pressure, dp_dt, dvort_dt, ez
 # %%
-model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], verbosity=0)
+model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], verbosity=0,
+                           use_frequency=False,
+                           use_frequency_in_tournament=False,
+                           adaptive_parsimony_scaling=5)
 
 model.fit(X, y)
-print("R^2 = ", model.score(X, y))
+print("R^2 = ", model.score(X, y)) # 0.3895 including grad_p_x and grad_p_z
 print(model.sympy())
 # %%
