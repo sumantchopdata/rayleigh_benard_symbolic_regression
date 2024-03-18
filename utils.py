@@ -20,18 +20,16 @@ def read_snapshots(file_name):
     f.close()
     return fields
 
-# Define a function to return the derivative of an array with respect to time.
-def derivative_wrt_time(array, timesteps):
-    # if time is a float, directly use it as the time step
-    if type(timesteps) == float:
-        dt = timesteps
-
-    elif type(timesteps) == np.ndarray or type(timesteps) == list:
-        dt = np.mean([timesteps[i+1] - timesteps[i] for i in range(len(timesteps)-1)])
-
-    else:
-        dt = 0.25
-    return np.array(np.gradient(array, dt, axis=0))
+def derivative_wrt_time(array, dt):
+    '''
+    return the first order derivative of the array with respect to time
+    along the time axis, and add a zero array at the beginning
+    to make the shape of the derivative array the same as the original array
+    '''
+    derivative = np.diff(array, axis=0) / dt
+    pad_shape = list(array.shape)
+    pad_shape[0] = 1
+    return np.concatenate((np.zeros(pad_shape), derivative), axis=0)
 
 def plot_comparative_time_heatmaps(X, y, coordinate, model, is_x = True, is_pooled=False):
     '''

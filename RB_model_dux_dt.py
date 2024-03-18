@@ -1,5 +1,5 @@
 #%%
-# Predicting the derivatives of u
+# Predicting du_x/dt
 import numpy as np
 import pysr
 

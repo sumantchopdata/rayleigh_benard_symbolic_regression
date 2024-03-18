@@ -1,5 +1,5 @@
 #%%
-# model 4 - predicting the time derivative of buoyancy
+# model 3 - predicting the time derivative of buoyancy
 import numpy as np
 import pysr
 
@@ -52,16 +52,16 @@ u_grad_b = ux * grad_b_x + uz * grad_b_z
 X = np.concatenate([div_grad_b, lift_tau_b2, u_grad_b], axis=1)
 y = db_dt
 print(X.shape, y.shape)
-#%%
+
 # Delete unnecessary variables
 del buoyancy, div_grad_b, lift_tau_b2, grad_b, velocity, db_dt, grad_b_x, grad_b_z,
 del u_grad_b, ux, uz, my_fields
 #%%
 # model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
-#                            use_frequency=False,
-#                            use_frequency_in_tournament=False,
-#                            adaptive_parsimony_scaling=5,
-#                            verbosity=0)
+                        #    use_frequency=False,
+                        #    use_frequency_in_tournament=False,
+                        #    adaptive_parsimony_scaling=5,
+                        #    verbosity=0)
 model = pysr.PySRRegressor.from_file('pickled_files/RB_db_dt_without_aps.pkl')
 model.fit(X, y)
 print("R^2:", model.score(X, y))

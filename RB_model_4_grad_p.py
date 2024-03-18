@@ -86,6 +86,14 @@ dvort_dt = dvort_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.f
 
 vorticity = vorticity.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
 
+# standardise all the arrays to have zero mean and unit variance
+def standardise(arr):
+    return (arr - np.mean(arr)) / np.std(arr)
+
+for arr in [dux_dt, duz_dt, div_grad_u_x, div_grad_u_z, dvort_dt, vorticity, 
+            buoyancy, u_grad_u_x, u_grad_u_z]:
+    arr = standardise(arr)
+
 X = np.concatenate(
     [arr[4:, ...].reshape(-1,1) for arr in 
         [dux_dt, duz_dt, div_grad_u_x, div_grad_u_z, dvort_dt, vorticity, 
@@ -97,19 +105,18 @@ y = np.concatenate([arr[4:, :, :].reshape(-1,1) for arr in
                         [grad_p_x, grad_p_z]],
                     axis=1).astype(np.float32)
 print(X.shape, y.shape)
-# %%
+
 # delete unnecessary variables to free up memory
 del buoyancy, div_grad_u, lift_tau_u2, grad_p, velocity, grad_u, du_dt, my_fields
 del velocity_x, velocity_z, div_grad_u_x, div_grad_u_z, lift_tau_u2_x, lift_tau_u2_z
 del grad_p_x, grad_p_z, grad_x_ux, grad_z_ux, grad_x_uz, grad_z_uz, dux_dt, duz_dt
 del u_grad_u_x, u_grad_u_z, vorticity, pressure, dp_dt, dvort_dt, ez
-# %%
-model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], verbosity=0,
-                           use_frequency=False,
-                           use_frequency_in_tournament=False,
-                           adaptive_parsimony_scaling=5)
 
+# model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], verbosity=0,
+#                            use_frequency=False,
+#                            use_frequency_in_tournament=False,
+#                            adaptive_parsimony_scaling=1)
+model = pysr.PySRRegressor.from_file('RB_model_5_grad_p.pkl')
 model.fit(X, y)
 print("R^2 = ", model.score(X, y)) # 0.3895 including grad_p_x and grad_p_z
 print(model.sympy())
-# %%
