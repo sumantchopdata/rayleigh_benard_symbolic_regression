@@ -74,22 +74,24 @@ dux_dt = dux_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float
 duz_dt = duz_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
 
 ez = ez.reshape(50,4,2).mean(axis=(1)).astype(np.float32)
+ez = np.tile(ez[:, np.newaxis, :], (1,128,16))
 
 u_grad_u = np.multiply(velocity_x, grad_x_ux) + np.multiply(velocity_z, grad_z_ux)
 
 X = np.concatenate(
-    [arr[4:, ...].reshape(-1,1) for arr in 
-     [grad_p_x, div_grad_u_x, buoyancy, ez, u_grad_u]], 
+    [arr.reshape(-1,1) for arr in 
+     [grad_p_x, div_grad_u_x, buoyancy*ez, u_grad_u, lift_tau_u2_x]], 
      axis=1
      ).astype(np.float32)
 
-y = np.concatenate([dux_dt[4:, :, :].reshape(-1,1)], axis=1).astype(np.float32)
+y = dux_dt.reshape(-1,1).astype(np.float32)
 print(X.shape, y.shape)
 #%%
 # delete unnecessary variables to free up memory
 del buoyancy, div_grad_u, lift_tau_u2, grad_p, velocity, grad_u, du_dt, my_fields
 del velocity_x, velocity_z, div_grad_u_x, div_grad_u_z, lift_tau_u2_x, lift_tau_u2_z
 del grad_p_x, grad_p_z, grad_x_ux, grad_z_ux, grad_x_uz, grad_z_uz, dux_dt, duz_dt, u_grad_u
+del ez
 #%%
 model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
                     # unary_operators=["exp", "abs", "relu",
@@ -98,9 +100,9 @@ model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
                     #                     "sin", "cos", "tan",
                     #                     "atan", "sinh", "cosh", "tanh",
                     #                     "sign", "floor", "ceil"],
-                #     parsimony=0.0001, use_frequency=False,
-                #     use_frequency_in_tournament=True,
-                #     adaptive_parsimony_scaling=aps,
+                    use_frequency=False,
+                    use_frequency_in_tournament=False,
+                    adaptive_parsimony_scaling=1,
                      verbosity=0)
 
 model.fit(X, y)

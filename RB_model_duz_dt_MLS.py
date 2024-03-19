@@ -51,8 +51,8 @@ velocity_z = velocity[:, 1, :, :]
 div_grad_u_x = div_grad_u[:, 0, :, :]
 div_grad_u_z = div_grad_u[:, 1, :, :]
 
-# lift_tau_u2_x = lift_tau_u2[:, 0, :, :].astype(np.float32)
-# lift_tau_u2_z = lift_tau_u2[:, 1, :, :].astype(np.float32)
+lift_tau_u2_x = lift_tau_u2[:, 0, :, :].astype(np.float32)
+lift_tau_u2_z = lift_tau_u2[:, 1, :, :].astype(np.float32)
 
 # lift_tau_u2_x = lift_tau_u2_x.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5))
 # lift_tau_u2_z = lift_tau_u2_z.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5))
@@ -99,42 +99,44 @@ def normalize(arr):
     return (arr - arr.min()) / (arr.max() - arr.min())
 
 for arr in [grad_p_z, div_grad_u_z, buoyancy, u_grad_u_z, vorticity, dvort_dt, duz_dt,
-            grad_p_x, div_grad_u_x, u_grad_u_x, dux_dt, div_grad_b, lift_tau_b2, u_grad_b]:
+            grad_p_x, div_grad_u_x, u_grad_u_x, dux_dt, div_grad_b, lift_tau_b2,
+            u_grad_b, lift_tau_u2_x, lift_tau_u2_z]:
     arr = normalize(arr)
 
 X1 = np.concatenate(
-    [arr[4:, ...].reshape(-1,1) for arr in 
-     [grad_p_z, div_grad_u_z, buoyancy, u_grad_u_z, vorticity, dvort_dt]], 
+    [arr.reshape(-1,1) for arr in 
+     [grad_p_z, div_grad_u_z, buoyancy, u_grad_u_z, vorticity, dvort_dt, lift_tau_u2_z]], 
      axis=1
      ).astype(np.float32)
 
-y1 = duz_dt[4:, :, :].reshape(-1,1).astype(np.float32)
+y1 = duz_dt.reshape(-1,1).astype(np.float32)
 print(X1.shape, y1.shape)
 
 X2 = np.concatenate(
-    [arr[4:, ...].reshape(-1,1) for arr in 
-     [grad_p_x, div_grad_u_x, buoyancy, u_grad_u_x, vorticity, dvort_dt]], 
+    [arr.reshape(-1,1) for arr in 
+     [grad_p_x, div_grad_u_x, buoyancy, u_grad_u_x, vorticity, dvort_dt, lift_tau_u2_x]], 
      axis=1
      ).astype(np.float32)
 
-y2 = dux_dt[4:, :, :].reshape(-1,1).astype(np.float32)
+y2 = dux_dt.reshape(-1,1).astype(np.float32)
 print(X2.shape, y2.shape)
 
 X3 = np.concatenate(
-    [arr[4:, ...].reshape(-1,1) for arr in 
+    [arr.reshape(-1,1) for arr in 
      [div_grad_b, lift_tau_b2, u_grad_b]], 
      axis=1
      ).astype(np.float32)
 
-y3 = db_dt[4:, :, :].reshape(-1,1).astype(np.float32)
+y3 = db_dt.reshape(-1,1).astype(np.float32)
 print(X3.shape, y3.shape)
-#%%
+  
 # delete unnecessary variables to free up memory
 del buoyancy, div_grad_u, grad_p, velocity, grad_u, du_dt, my_fields
 del velocity_x, velocity_z, div_grad_u_x, div_grad_u_z
 del grad_p_x, grad_p_z, grad_x_ux, grad_z_ux, grad_x_uz, grad_z_uz, dux_dt, duz_dt
 del vorticity, dvort_dt, grad_b, grad_b_x, grad_b_z, u_grad_u_x, u_grad_u_z, u_grad_b
-# %%
+del lift_tau_u2_x, lift_tau_u2_z, lift_tau_u2
+
 # define the model
 X1 = sm.add_constant(X1)
 model1 = sm.OLS(y1, X1).fit()
