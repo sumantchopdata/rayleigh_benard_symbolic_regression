@@ -64,10 +64,9 @@ del u_grad_b, ux, uz, my_fields, create_array
 # Since the parameters both do not work together
 
 # First loop
-# The default value of parsimony is 0.0032
+# The default value of parsimony is 0.0032, but very small values give similar results as well
 
-pars_list = [0.0001, 0.0002, 0.0004, 0.001, 0.0016, 0.002, 0.0025, 0.0032, 0.004,
-             0.005, 0.0075, 0.01]
+pars_list = [0.000001, 0.000005, 0.00001]
 
 R2_pars_list = []
 
@@ -83,9 +82,10 @@ def run_pars_loop(pars_list, R2_pars_list, X, y):
 
         # Here, in model.sympy(), x0 is div_grad_b, x1 is lift_tau_b2 and x2 is u_grad_b
         print('The best model is', model.sympy(), '\n')
+        del model
 
 run_pars_loop(pars_list, R2_pars_list, X, y)
-
+#%%
 # Second loop
 # The default value of adaptive_parsimony_scaling is 20
     
@@ -101,6 +101,7 @@ def run_aps_loop(aps_list, R2_aps_list, X, y):
             verbosity = 0,
             use_frequency=False,
             use_frequency_in_tournament=False)
+        
         model.fit(X, y)
         print('For adaptive_parsimony_scaling =', aps,
               'the best model R2 score is ', model.score(X, y))
@@ -108,15 +109,9 @@ def run_aps_loop(aps_list, R2_aps_list, X, y):
 
         # Here, in model.sympy(), x0 is div_grad_b, x1 is lift_tau_b2 and x2 is u_grad_b
         print('The best model is', model.sympy(), '\n')
+        del model
 
 run_aps_loop(aps_list, R2_aps_list, X, y)
-
-# plot the R2 scores for different values of parsimony
-plt.plot(pars_list, R2_pars_list)
-plt.xlabel('Parsimony')
-plt.ylabel('R2 score')
-plt.title('R2 score vs Parsimony')
-plt.show()
 
 # plot the R2 scores for different values of adaptive_parsimony_scaling
 plt.plot(aps_list, R2_aps_list)
@@ -127,33 +122,23 @@ plt.show()
 #%%
 # Add random noise to the model and see how the R2 score changes
 
-# Add noise to the X array
-X_noisy = X + np.random.normal(0, 0.1, X.shape)
-y_noisy = y + np.random.normal(0, 0.1, y.shape)
+# Add different levels of noise to the X array to see the final output
+R2_noisy_list = []
+noise_list = [0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.5]
+for noise in noise_list:
+    X_noisy = X + np.random.normal(0, 0.1, X.shape)
+    y_noisy = y + np.random.normal(0, 0.1, y.shape)
 
-# First loop
-# The default value of parsimony is 0.0032
-
-R2_pars_list_noisy = []
-run_pars_loop(pars_list, R2_pars_list_noisy, X_noisy, y_noisy)
-
-# Second loop
-# The default value of adaptive_parsimony_scaling is 20
-
-R2_aps_list_noisy = []
-run_aps_loop(aps_list, R2_aps_list_noisy, X_noisy, y_noisy)
-
+    model = pysr.PySRRegressor(binary_operators=["+", "-", "*"], verbosity = 0)
+    model.fit(X_noisy, y_noisy)
+    print('For noise =', noise, 'the best model R2 score is ', model.score(X_noisy, y_noisy))
+    print('The best model is', model.sympy(), '\n')
+    del model
+    
 # plot the R2 scores for different values of parsimony
-plt.plot(pars_list, R2_pars_list_noisy)
-plt.xlabel('Parsimony')
+plt.plot(noise_list, R2_noisy_list)
+plt.xlabel('Noise')
 plt.ylabel('R2 score')
-plt.title('R2 score vs Parsimony with 10% \Gaussian noise')
-plt.show()
-
-# plot the R2 scores for different values of adaptive_parsimony_scaling
-plt.plot(aps_list, R2_aps_list_noisy)
-plt.xlabel('Adaptive Parsimony Scaling')
-plt.ylabel('R2 score')
-plt.title('R2 score vs Adaptive Parsimony Scaling with 10% Gaussian noise')
+plt.title('R2 score vs Noise')
 plt.show()
 # %%

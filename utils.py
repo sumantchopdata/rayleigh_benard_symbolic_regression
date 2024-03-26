@@ -4,8 +4,9 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
-from scipy.stats import pearsonr
 import seaborn as sns
+import cv2
+import glob
 
 # define the function to read the snapshot h5 files and return the data
 def read_snapshots(file_name):    
@@ -228,3 +229,24 @@ def plot_corr_matrix(corr_matrix, title, field_names, to_mark=True,
     plt.tight_layout()
     plt.savefig(title+'.png', dpi=300)
     plt.show()
+
+def make_video(files_path, video_name, fps):
+    '''
+    Create a video from the images in the files_path directory with the
+    specified video_name and fps.
+    '''
+    img_array = []
+    file_list = sorted(glob.glob(files_path+'/*.png'))
+    for filename in file_list: # use the path to your images
+        img = cv2.imread(filename)
+        height, width, _ = img.shape
+        size = (width,height)
+        img_array.append(img)
+
+    out = cv2.VideoWriter(video_name+'.avi',cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
+    
+    for i in range(len(img_array)):
+        out.write(img_array[i])
+    out.release()
+    print('Video created successfully with fps = ', fps,
+          ' and name = ', video_name+'.avi')
