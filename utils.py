@@ -1,16 +1,12 @@
 import h5py
 import os
-import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
-import seaborn as sns
-import cv2
-import glob
 
 # define the function to read the snapshot h5 files and return the data
-def read_snapshots(file_name):    
-    f = h5py.File(os.path.join('snapshots', file_name), 'r')
+def read_snapshots(file_path):    
+    f = h5py.File(file_path, 'r')
     
     tasks = f['tasks']
     fields = []
@@ -143,6 +139,7 @@ def manage_files():
     '''
     Put all the model saved files in a folder called pickled_files
     '''
+    import shutil
     endings = ('.pkl', '.csv', '.out1', '.out2', '.bkup')
     if not os.path.exists('pickled_files'):
         os.mkdir('pickled_files')
@@ -206,6 +203,8 @@ def top_k_corrs(pcm, k=10):
 def plot_corr_matrix(corr_matrix, title, field_names, to_mark=True,
                      top_k_correlations=None, top_k_indices=None, top_k=5,
                      annot_all=False, annot_top_k=True):
+    import seaborn as sns
+    
     # create a mask for the upper triangle
     mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
 
@@ -235,6 +234,9 @@ def make_video(files_path, video_name, fps):
     Create a video from the images in the files_path directory with the
     specified video_name and fps.
     '''
+    import cv2
+    import glob
+
     img_array = []
     file_list = sorted(glob.glob(files_path+'/*.png'))
     for filename in file_list: # use the path to your images
