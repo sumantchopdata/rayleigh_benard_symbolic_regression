@@ -137,3 +137,18 @@ plt.figure(figsize=(10, 10))
 sns.heatmap(corr, annot=True, cmap='viridis')
 plt.show()
 #%%
+X2 = np.concatenate(
+    [arr[45:, :, :].reshape(-1,1) for arr in 
+     [grad_p_x, div_grad_u_x, buoyancy, u_grad_u]], 
+     axis=1
+     ).astype(np.float32)
+y2 = dux_dt[45:, :, :].reshape(-1,1).astype(np.float32)
+
+model.fit(X2, y2)
+print("R^2 = ", model.score(X2, y2))
+print(model.sympy())
+
+model = sm.OLS(y2, X2)
+results = model.fit()
+print(results.summary())
+# %%

@@ -127,7 +127,8 @@ def plotting(model, X, y, i, title):
 
     # plot the y = x line
     plt.plot(np.linspace(minimum, maximum, 100), np.linspace(minimum, maximum, 100), 'r')
-    plt.title(title + '\n R^2 value is ' + str(r2_score(y_new, X_new)))
+    plt.title(title + '\n R^2 value is ' + str(r2_score(y_new, X_new))
+              + '\n model equation is ' + str(model.sympy()))
 
     plt.savefig(title+'.png')
     plt.show()
