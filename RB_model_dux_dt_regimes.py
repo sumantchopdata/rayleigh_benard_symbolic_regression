@@ -1,7 +1,11 @@
 #%%
-# Predicting du_x/dt
+# Predicting du_x/dt for the two regimes separately
 import numpy as np
 import pysr
+import pandas as pd
+
+import statsmodels.api as sm
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -74,25 +78,26 @@ duz_dt = du_dt[:, 1, :, :]
 dux_dt = dux_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
 duz_dt = duz_dt.reshape(50, 4, 128, 2, 32, 2).mean(axis=(1,3,5)).astype(np.float32)
 
-ez = ez.reshape(50,4,2).mean(axis=(1)).astype(np.float32)
-ez = np.tile(ez[:, np.newaxis, :], (1,128,16))
+ez = ez.reshape(200,2).astype(np.float32)
+ez = ez.reshape(50, 4, 2).mean(axis=1)
+ez = np.tile(ez[:, np.newaxis], (1,128,16))
 
 u_grad_u = np.multiply(velocity_x, grad_x_ux) + np.multiply(velocity_z, grad_z_ux)
 
 X = np.concatenate(
-    [arr.reshape(-1,1) for arr in 
-     [grad_p_x, div_grad_u_x, buoyancy*ez, u_grad_u, lift_tau_u2_x]], 
+    [arr[:45, :, :].reshape(-1,1) for arr in 
+     [grad_p_x, div_grad_u_x, buoyancy, u_grad_u]], 
      axis=1
      ).astype(np.float32)
 
-y = dux_dt.reshape(-1,1).astype(np.float32)
+y = dux_dt[:45, :, :].reshape(-1,1).astype(np.float32)
 print(X.shape, y.shape)
 #%%
 # delete unnecessary variables to free up memory
 del buoyancy, div_grad_u, lift_tau_u2, grad_p, velocity, grad_u, du_dt, my_fields
 del velocity_x, velocity_z, div_grad_u_x, div_grad_u_z, lift_tau_u2_x, lift_tau_u2_z
-del grad_p_x, grad_p_z, grad_x_ux, grad_z_ux, grad_x_uz, grad_z_uz, dux_dt, duz_dt, u_grad_u
-del ez
+del grad_p_x, grad_p_z, grad_x_ux, grad_z_ux, grad_x_uz, grad_z_uz, dux_dt
+del ez, duz_dt, u_grad_u
 #%%
 model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
                     # unary_operators=["exp", "abs", "relu",
@@ -101,11 +106,34 @@ model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
                     #                     "sin", "cos", "tan",
                     #                     "atan", "sinh", "cosh", "tanh",
                     #                     "sign", "floor", "ceil"],
-                    use_frequency=False,
-                    use_frequency_in_tournament=False,
-                    adaptive_parsimony_scaling=1,
-                     verbosity=0)
+                    # use_frequency=False,
+                    # use_frequency_in_tournament=False,
+                    # adaptive_parsimony_scaling=1,
+                    verbosity=0)
 
 model.fit(X, y)
 print("R^2 = ", model.score(X, y))
 print(model.sympy())
+#%%
+# perform multiple linear regression on the data
+
+model = sm.OLS(y, X)
+results = model.fit()
+print(results.summary())
+
+# compute vif values
+vif = pd.DataFrame()
+vif["VIF Factor"] = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
+vif["features"] = ['grad_p_x', 'div_grad_u_x', 'buoyancy*ez', 'u_grad_u', 'lift_tau_u2_x']
+print(vif)
+#%%
+# plot collinearity matrix
+corr = np.corrcoef(X, rowvar=False)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 10))
+sns.heatmap(corr, annot=True, cmap='viridis')
+plt.show()
+#%%

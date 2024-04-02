@@ -176,7 +176,7 @@ def get_pearson_corr(array_list, field_names):
 def top_k_corrs(pcm, k=10):
     '''
     Return the top k most correlated pairs (either positive or negative)
-    from the Pearson correlation matrices pcm and scm.
+    from the Pearson correlation matrices pcm.
     We exclude self-correlations and duplicate pairs. The indices of the
     top k most correlated pairs are returned in ascending order.
     '''
