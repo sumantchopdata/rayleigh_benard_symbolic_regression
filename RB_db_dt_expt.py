@@ -1,6 +1,5 @@
 #%%
-# Experiment with parsimony parameter and the adaptive_parsimony_scaling parameter
-# on the db/dt model
+# Experiment with random noise added to the data on the db/dt model
 
 import numpy as np
 import pysr
@@ -12,7 +11,8 @@ warnings.filterwarnings('ignore')
 from utils import *
 
 # load the fields from the snapshots h5 files
-my_fields = [read_snapshots('snapshots_s'+str(i)+'.h5') for i in range(1, 5)]
+my_fields = [read_snapshots('RB_snaps/snapshots_2e6_1/snapshots_s'+str(i)+'.h5')
+             for i in range(1, 5)]
 
 def create_array(x, index, datatype=np.float32):
     '''
@@ -60,85 +60,50 @@ print(X.shape, y.shape)
 del buoyancy, div_grad_b, lift_tau_b2, grad_b, velocity, db_dt, grad_b_x, grad_b_z,
 del u_grad_b, ux, uz, my_fields, create_array
 #%%
-# Perform symbolic regression in two different for loops
-# Since the parameters both do not work together
-
-# First loop
-# The default value of parsimony is 0.0032, but very small values give similar results as well
-
-pars_list = [0.000001, 0.000005, 0.00001]
-
-R2_pars_list = []
-
-def run_pars_loop(pars_list, R2_pars_list, X, y):
-    for pars in pars_list:
-        model = pysr.PySRRegressor(
-            binary_operators=["+", "-", "*"],
-            parsimony = pars,
-            verbosity = 0)
-        model.fit(X, y)
-        print('For parsimony =', pars, 'the best model R2 score is ', model.score(X, y))
-        R2_pars_list.append(model.score(X, y))
-
-        # Here, in model.sympy(), x0 is div_grad_b, x1 is lift_tau_b2 and x2 is u_grad_b
-        print('The best model is', model.sympy(), '\n')
-        del model
-
-run_pars_loop(pars_list, R2_pars_list, X, y)
-#%%
-# Second loop
-# The default value of adaptive_parsimony_scaling is 20
-    
-aps_list = [1, 2, 5, 10, 15, 20, 25, 50, 75, 100, 200, 500, 1000]
-
-R2_aps_list = []
-
-def run_aps_loop(aps_list, R2_aps_list, X, y):
-    for aps in aps_list:
-        model = pysr.PySRRegressor(
-            binary_operators=["+", "-", "*"],
-            adaptive_parsimony_scaling = aps,
-            verbosity = 0,
-            use_frequency=False,
-            use_frequency_in_tournament=False)
-        
-        model.fit(X, y)
-        print('For adaptive_parsimony_scaling =', aps,
-              'the best model R2 score is ', model.score(X, y))
-        R2_aps_list.append(model.score(X, y))
-
-        # Here, in model.sympy(), x0 is div_grad_b, x1 is lift_tau_b2 and x2 is u_grad_b
-        print('The best model is', model.sympy(), '\n')
-        del model
-
-run_aps_loop(aps_list, R2_aps_list, X, y)
-
-# plot the R2 scores for different values of adaptive_parsimony_scaling
-plt.plot(aps_list, R2_aps_list)
-plt.xlabel('Adaptive Parsimony Scaling')
-plt.ylabel('R2 score')
-plt.title('R2 score vs Adaptive Parsimony Scaling')
-plt.show()
-#%%
 # Add random noise to the model and see how the R2 score changes
 
-# Add different levels of noise to the X array to see the final output
-R2_noisy_list = []
-noise_list = [0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.5]
-for noise in noise_list:
-    X_noisy = X + np.random.normal(0, 0.1, X.shape)
-    y_noisy = y + np.random.normal(0, 0.1, y.shape)
+R2_noisy_list, model_sympys_list = [], []
 
-    model = pysr.PySRRegressor(binary_operators=["+", "-", "*"], verbosity = 0)
+noise_list = [0.0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.0075, 0.01, 0.0125,
+              0.015, 0.0175, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05, 0.06,
+              0.07, 0.08, 0.09, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25, 0.275,
+              0.3, 0.35, 0.4, 0.45, 0.5]
+
+for noise in noise_list:
+    X_noisy = X + np.random.normal(0, noise, X.shape)
+    y_noisy = y + np.random.normal(0, noise, y.shape)
+
+    model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], maxsize=7,
+                               bumper=True, elementwise_loss='L1DistLoss()',
+                               populations = 36, batching=True, verbosity=0)
     model.fit(X_noisy, y_noisy)
-    print('For noise =', noise, 'the best model R2 score is ', model.score(X_noisy, y_noisy))
-    print('The best model is', model.sympy(), '\n')
-    del model
     
-# plot the R2 scores for different values of parsimony
+    print('For noise =', noise, 'the best model R2 score is ',
+          model.score(X_noisy, y_noisy))
+    R2_noisy_list.append(model.score(X_noisy, y_noisy))
+
+    print('The best model is', model.sympy(), '\n')
+    model_sympys_list.append(model.sympy())
+
+    del model, X_noisy, y_noisy
+
+# print(R2_noisy_list)
+# print(model_sympys_list)
+#%%    
+# plot the R2 scores for different values of noise
+
+plt.scatter(noise_list, R2_noisy_list)
+# for i, txt in enumerate(model_sympys_list):
+#     plt.annotate(txt, (noise_list[i], R2_noisy_list[i]))
+
 plt.plot(noise_list, R2_noisy_list)
+
 plt.xlabel('Noise')
+plt.xscale('log')
 plt.ylabel('R2 score')
-plt.title('R2 score vs Noise')
+# plt.yscale('log')
+
+plt.title('R2 score vs Noise for db/dt model with random noise added')
+plt.savefig('R2_vs_noise_for_db_dt.png')
 plt.show()
 # %%

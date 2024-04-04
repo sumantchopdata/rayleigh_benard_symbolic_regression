@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 from utils import *
 
 # load the fields from the snapshots h5 files
-my_fields = [read_snapshots('snapshots_s'+str(i)+'.h5') for i in range(1, 5)]
+my_fields = [read_snapshots('RB_snaps/snapshots_2e6_1/snapshots_s'+str(i)+'.h5') for i in range(1, 5)]
 
 def create_array(x, index, datatype=np.float32):
     '''
@@ -57,12 +57,18 @@ print(X.shape, y.shape)
 del buoyancy, div_grad_b, lift_tau_b2, grad_b, velocity, db_dt, grad_b_x, grad_b_z,
 del u_grad_b, ux, uz, my_fields
 #%%
-# model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
-                        #    use_frequency=False,
-                        #    use_frequency_in_tournament=False,
-                        #    adaptive_parsimony_scaling=5,
-                        #    verbosity=0)
-model = pysr.PySRRegressor.from_file('pickled_files/RB_db_dt_without_aps.pkl')
+# model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], verbosity=0,
+#                            use_frequency=False,
+#                            use_frequency_in_tournament=False,
+#                            adaptive_parsimony_scaling=1)
+
+# model = pysr.PySRRegressor.from_file('pickled_files/RB_db_dt_without_aps.pkl')
+
+# Trying out a new model based on the workflow tips in the documentation
+
+model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], populations = 36,
+                           batching=True, maxsize=7, verbosity=0)
+
 model.fit(X, y)
 print("R^2:", model.score(X, y))
 print(model.sympy())

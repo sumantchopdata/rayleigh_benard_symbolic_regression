@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 from utils import *
 
 # load the fields from the snapshots h5 files
-my_fields = [read_snapshots('snapshots_s'+str(i)+'.h5') for i in range(1, 5)]
+my_fields = [read_snapshots('RB_snaps/snapshots_2e6_1/snapshots_s'+str(i)+'.h5') for i in range(1, 5)]
 
 def create_array(x, index, datatype=np.float32):
     '''

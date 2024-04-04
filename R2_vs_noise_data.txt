@@ -1,0 +1,104 @@
+For noise = 0 the best model R2 score is  0.839254781420806
+The best model is 0.00069614046*x0 - x2 
+
+For noise = 0.001 the best model R2 score is  0.8388748587271538
+The best model is 0.000699487*x0 - x2 
+
+For noise = 0.002 the best model R2 score is  0.8379228016990612
+The best model is 0.00070116983*x0 - x2 
+
+For noise = 0.003 the best model R2 score is  0.836609871349761
+The best model is 0.0006990202*x0 - x2 
+
+For noise = 0.004 the best model R2 score is  0.8347133487306104
+The best model is 0.0006991287*x0 - x2 
+
+For noise = 0.005 the best model R2 score is  0.8325543873346839
+The best model is 0.0006946154*x0 - x2 
+
+For noise = 0.0075 the best model R2 score is  0.8239453351249085
+The best model is 0.0006969347*x0 - x2 
+
+For noise = 0.01 the best model R2 score is  0.8120196958818136
+The best model is 0.0006880454*x0 - x2 
+
+For noise = 0.0125 the best model R2 score is  0.7973017168851783
+The best model is 0.0006931664*x0 - x2
+
+For noise = 0.015 the best model R2 score is  0.5586829967745214
+The best model is -0.68597394*x2 
+
+For noise = 0.0175 the best model R2 score is  0.5530145825589219
+The best model is -0.66939783*x2 
+
+For noise = 0.02 the best model R2 score is  0.5439517971764247
+The best model is -0.6526355*x2 
+
+For noise = 0.025 the best model R2 score is  0.5211959635976793
+The best model is -0.6160177*x2 
+
+For noise = 0.03 the best model R2 score is  0.49527850119046013
+The best model is -0.5836424*x2 
+
+For noise = 0.035 the best model R2 score is  0.4624842910226856
+The best model is -0.5464623*x2
+
+For noise = 0.04 the best model R2 score is  0.42827420271330263
+The best model is -0.51449287*x2 
+
+For noise = 0.045 the best model R2 score is  0.39447706057001997
+The best model is -0.4864223*x2 
+
+For noise = 0.05 the best model R2 score is  0.357843451433676
+The best model is -0.45669678*x2 
+
+For noise = 0.06 the best model R2 score is  0.2955140782824469
+The best model is -0.4076762*x2 
+
+For noise = 0.07 the best model R2 score is  0.2406346545487683
+The best model is -0.3640049*x2 
+
+For noise = 0.08 the best model R2 score is  0.19446241393600627
+The best model is -0.32944205*x2 
+
+For noise = 0.09 the best model R2 score is  0.15618477035564193
+The best model is -0.2928266*x2 
+
+For noise = 0.1 the best model R2 score is  0.1233695336913131
+The best model is -0.2624302*x2 
+
+For noise = 0.125 the best model R2 score is  0.07498618311523109
+The best model is -0.20802976*x2 
+
+For noise = 0.15 the best model R2 score is  0.04303638760679829
+The best model is -0.16211073*x2 
+
+For noise = 0.175 the best model R2 score is  0.029571994901882337
+The best model is -0.13912684*x2 
+
+For noise = 0.2 the best model R2 score is  0.018556640915129874
+The best model is -0.10783761*x2 
+
+For noise = 0.225 the best model R2 score is  0.014051161044079219
+The best model is -0.10044246*x2 
+
+For noise = 0.25 the best model R2 score is  0.00860789409242746
+The best model is -0.0801621*x2 
+
+For noise = 0.275 the best model R2 score is  0.006225562333402768
+The best model is -0.06858837*x2 
+
+For noise = 0.3 the best model R2 score is  0.004330694444944161
+The best model is -0.06014602*x2 
+
+For noise = 0.35 the best model R2 score is  0.0025949855949624068
+The best model is -0.04748086*x2 
+
+For noise = 0.4 the best model R2 score is  0.001489100410956512
+The best model is -0.03571533*x2 
+
+For noise = 0.45 the best model R2 score is  0.000797177493995771
+The best model is -0.026206696*x2 
+
+For noise = 0.5 the best model R2 score is  0.0007319860241528087
+The best model is -0.022418577*x2 

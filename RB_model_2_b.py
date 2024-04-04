@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 from utils import *
 
 # load the fields from the snapshots h5 files
-my_fields = [read_snapshots('snapshots_s'+str(i)+'.h5') for i in range(1, 5)]
+my_fields = [read_snapshots('RB_snaps/snapshots_2e6_1/snapshots_s'+str(i)+'.h5') for i in range(1, 5)]
 
 buoyancy = np.concatenate([my_fields[i][0]['buoyancy'] for i in range(4)], axis=0)
 div_grad_u = np.concatenate([my_fields[i][2]['div_grad_u'] for i in range(4)], axis=0)
