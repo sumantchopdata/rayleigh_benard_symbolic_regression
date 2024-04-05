@@ -2,10 +2,9 @@
 # Predicting db/dt for the two regimes separately
 import numpy as np
 import pysr
-import pandas as pd
 
-import statsmodels.api as sm
-from statsmodels.stats.outliers_influence import variance_inflation_factor
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -53,63 +52,30 @@ uz = uz.reshape(200, 128, 2, 32, 2).mean(axis=(2,4))
 # We will take the reshaped div_grad_u_x and div_grad_u_z as the y array
 # and everything else as the X array.
 u_grad_b = ux * grad_b_x + uz * grad_b_z
-#%%
+
 X1 = np.concatenate([arr[:45, :, :].reshape(-1,1) for arr in [
     div_grad_b, lift_tau_b2, u_grad_b
     ]], axis=1)
 y1 = db_dt[:45, :, :].reshape(-1,1)
 print(X1.shape, y1.shape)
 
-# Delete unnecessary variables
-# del buoyancy, div_grad_b, lift_tau_b2, grad_b, velocity, db_dt, grad_b_x, grad_b_z,
-# del u_grad_b, ux, uz, my_fields
-
-# perform multiple linear regression on the data
-
-model = sm.OLS(y1, X1)
-results = model.fit()
-print(results.summary())
-
-# compute vif values
-vif = pd.DataFrame()
-vif["VIF Factor"] = [variance_inflation_factor(X, i) for i in range(X.shape[1])]
-vif["features"] = ['div_grad_b', 'lift_tau_b2', 'u_grad_b']
-print(vif)
-#%%
-model = pysr.PySRRegressor(binary_operators=["+", "*", "-"],
-                    # unary_operators=["exp", "abs", "relu",
-                    #                     "sqrt", "square", "cube",
-                    #                     "log10", "log2", "log",
-                    #                     "sin", "cos", "tan",
-                    #                     "atan", "sinh", "cosh", "tanh",
-                    #                     "sign", "floor", "ceil"],
-                    # use_frequency=False,
-                    # use_frequency_in_tournament=False,
-                    # adaptive_parsimony_scaling=1,
-                    verbosity=0)
+model = pysr.PySRRegressor(binary_operators=["+", "*", "-"], maxsize=7,
+                            bumper=True, populations = 36, batching=True,
+                            verbosity=0, parsimony=0.001)
 
 model.fit(X1, y1)
 print("R^2 = ", model.score(X1, y1))
 print(model.sympy())
 
 plotting(model, X1, y1, 0, 'db_dt in the first regime')
-#%%
-# plot collinearity matrix
-corr = np.corrcoef(X1, rowvar=False)
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-plt.figure(figsize=(10, 10))
-sns.heatmap(corr, annot=True, cmap='viridis')
-plt.show()
-#%%
 X2 = np.concatenate(
     [arr[45:, :, :].reshape(-1,1) for arr in 
      [div_grad_b, lift_tau_b2, u_grad_b]], 
      axis=1
      ).astype(np.float32)
 y2 = db_dt[45:, :, :].reshape(-1,1).astype(np.float32)
+print(X2.shape, y2.shape)
 
 model.fit(X2, y2)
 print("R^2 = ", model.score(X2, y2))
@@ -117,11 +83,24 @@ print(model.sympy())
 
 plotting(model, X2, y2, 0, 'db_dt in the second regime')
 
-model_ols_1 = sm.OLS(y1, X1)
-results_1 = model_ols_1.fit()
-print(results_1.summary())
+X3 = np.concatenate(
+    [arr.reshape(-1,1) for arr in 
+     [div_grad_b, lift_tau_b2, u_grad_b]], 
+     axis=1
+     ).astype(np.float32)
+y3 = db_dt.reshape(-1,1).astype(np.float32)
+print(X3.shape, y3.shape)
 
-model_ols_2 = sm.OLS(y2, X2)
-results_2 = model_ols_2.fit()
-print(results_2.summary())
-# %%
+model.fit(X3, y3)
+print("R^2 = ", model.score(X3, y3))
+print(model.sympy())
+
+plotting(model, X3, y3, 0, 'db_dt for the whole arrays')
+
+# plot collinearity matrix
+for arr in [X1, X2, X3]:
+    corr = np.corrcoef(arr, rowvar=False)
+
+    plt.figure(figsize=(10, 10))
+    sns.heatmap(corr, annot=True, cmap='coolwarm')
+    plt.show()

@@ -92,8 +92,9 @@ problem.add_equation("dt(h1) + grad(h1*u1) = (h1f(y) - h1)/tau_h")
 problem.add_equation("dt(h2) + grad(h2*u2) = (h2f(y) - h2)/tau_h")
 
 # Figure out how to encode the variables: s, r, f, g, h1f, h2f and tau_h
+# Bruh first figure out what they are in the paper
 
-# Solver
+# s = phi1/phi2, phi is the densities of the fluids
 
 # Solver
 solver = problem.build_solver(d3.RK222)
