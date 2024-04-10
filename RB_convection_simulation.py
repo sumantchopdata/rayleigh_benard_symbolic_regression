@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 
 # Parameters
 Lx, Lz = 4, 1
-Nx, Nz = 256, 64
-Rayleigh = 1e9
-Prandtl = 0.2
+Nx, Nz = 512, 256
+Rayleigh = 2e6
+Prandtl = 1
 dealias = 3/2
-stop_sim_time = 75
+stop_sim_time = 50
 timestepper = d3.RK222
-max_timestep = 0.0625
+max_timestep = 0.125
 dtype = np.float64
 
 # Bases
